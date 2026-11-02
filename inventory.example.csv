@@ -1,0 +1,3 @@
+ip,port,asset,owner,patch_status,patch_evidence
+192.0.2.10,443,example-edge,platform,unknown,
+192.0.2.20,8443,example-service,service-team,unknown,

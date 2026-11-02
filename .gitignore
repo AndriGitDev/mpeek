@@ -1,0 +1,35 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.DS_Store
+
+# Local credentials and configuration
+.env
+.env.*
+*.pem
+*.key
+
+# Operational inputs and observations stay outside version control.
+targets*.txt
+*.csv
+!*.example.csv
+*.jsonl
+run.json
+*.log
+mptcp-audit-*/
+mpeek-run-*/
+audit-*/
+first-plan/
+first-scan/
+
+# Generated distribution and machine-specific validation artifacts
+*.zip
+*.sha256
+SHA256SUMS
+VALIDATION.json
