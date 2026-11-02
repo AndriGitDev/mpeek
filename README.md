@@ -7,8 +7,8 @@ expanding to a subnet. Examples use documentation addresses; no organization-spe
 targets or credentials are included. Start with [QUICKSTART.md](QUICKSTART.md).
 
 Run `python3 mpeek.py --help` for options. The original `mptcp_audit.py` entry point
-remains available with the same behavior. This repository is currently private;
-an open-source license and public release have not yet been selected.
+remains available with the same behavior. Licensed under the [MIT License](LICENSE).
+Version 1.1.0 is being prepared as the initial public release.
 
 `mptcp_audit.py` inventories reachable IPv4 TCP endpoints and, on Linux, checks
 whether an ordinary connection negotiated MPTCP. It sends no application payload,
@@ -238,3 +238,10 @@ No external scan is performed by the tests.
 
 Check vendor sources again when running the audit; patch status changes. Neither
 packet filtering nor an installed logger establishes that a kernel is patched.
+
+## Development and releases
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
+[CHANGELOG.md](CHANGELOG.md), and [RELEASING.md](RELEASING.md).
+Build an allowlisted source bundle with `python3 scripts/build_release.py` from
+a committed checkout. No deployment or public-release automation is included.

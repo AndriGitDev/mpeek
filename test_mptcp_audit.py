@@ -1,6 +1,7 @@
 import argparse
 import csv
 import errno
+import hashlib
 import json
 from pathlib import Path
 import socket
@@ -12,6 +13,7 @@ import tempfile
 import threading
 import time
 import unittest
+import zipfile
 from unittest.mock import patch
 
 import mptcp_audit as audit
@@ -374,13 +376,20 @@ class LoopbackTests(unittest.TestCase):
             self.assertEqual(queue[0]["tcp_status"], "not_scanned")
             self.assertEqual(queue[0]["next_action"], "patch_running_kernel")
 
-    def test_tcp_refusal_is_not_tested_for_mptcp(self):
+    def test_tcp_nonlistener_is_not_tested_for_mptcp(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as held:
             held.bind(("127.0.0.1", 0))
             row = audit.scan_endpoint("127.0.0.1", "loopback", held.getsockname()[1], "tcp", 1, "test", {})
-            self.assertEqual(row["tcp_status"], "refused")
+            # Linux refuses a bound nonlistener; macOS may silently drop its SYN.
+            self.assertIn(row["tcp_status"], {"refused", "timeout"})
             self.assertEqual(row["mptcp_status"], "not_tested")
             self.assertTrue(row["self_probe"])
+
+    def test_tcp_refusal_mapping_is_explicit(self):
+        with patch.object(audit, "connect_with_timeout", side_effect=ConnectionRefusedError):
+            row = audit.scan_endpoint("127.0.0.1", "loopback", 443, "tcp", 1, "test", {})
+        self.assertEqual(row["tcp_status"], "refused")
+        self.assertEqual(row["mptcp_status"], "not_tested")
 
     def test_full_scan_reports_and_inventory_join(self):
         try:
@@ -494,6 +503,33 @@ class LoopbackTests(unittest.TestCase):
             self.skipTest(str(exc))
         self.assertEqual(controls["positive_control"][0], "observed")
         self.assertEqual(controls["negative_control"][0], "not_observed")
+
+
+@unittest.skipUnless((Path(audit.__file__).parent / ".git").exists(), "Release builder checks need a Git checkout")
+class ReleaseTests(unittest.TestCase):
+    def test_release_is_reproducible_allowlisted_and_manifested(self):
+        from scripts import build_release
+        with tempfile.TemporaryDirectory() as directory:
+            first, checksum = build_release.build(Path(directory) / "one", allow_dirty=True)
+            second, _ = build_release.build(Path(directory) / "two", allow_dirty=True)
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+            self.assertEqual(checksum.read_text().split()[0], hashlib.sha256(first.read_bytes()).hexdigest())
+            prefix = f"mpeek-v{audit.VERSION}/"
+            with zipfile.ZipFile(first) as archive:
+                expected = {prefix + name for name in build_release.FILES} | {prefix + "MANIFEST.json"}
+                self.assertEqual(set(archive.namelist()), expected)
+                manifest = json.loads(archive.read(prefix + "MANIFEST.json"))
+                for name, digest in manifest["files"].items():
+                    self.assertEqual(hashlib.sha256(archive.read(prefix + name)).hexdigest(), digest)
+                self.assertIn(b"MIT License", archive.read(prefix + "LICENSE"))
+
+    def test_release_rejects_uncommitted_source_by_default(self):
+        from scripts import build_release
+        def dirty_git(*args):
+            return " M README.md" if args[0] == "status" else "tracked"
+        with tempfile.TemporaryDirectory() as directory, patch.object(build_release, "git", side_effect=dirty_git):
+            with self.assertRaisesRegex(ValueError, "Commit all release source"):
+                build_release.build(Path(directory))
 
 
 if __name__ == "__main__":
