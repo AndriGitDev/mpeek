@@ -8,7 +8,7 @@ targets or credentials are included. Start with [QUICKSTART.md](QUICKSTART.md).
 
 Run `python3 mpeek.py --help` for options. The original `mptcp_audit.py` entry point
 remains available with the same behavior. Licensed under the [MIT License](LICENSE).
-Version 1.1.0 is being prepared as the initial public release.
+Version 1.1.0 is available as the [initial public release candidate](https://github.com/AndriGitDev/mpeek/releases/tag/v1.1.0).
 
 `mptcp_audit.py` inventories reachable IPv4 TCP endpoints and, on Linux, checks
 whether an ordinary connection negotiated MPTCP. It sends no application payload,

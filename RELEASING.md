@@ -1,7 +1,7 @@
 # Preparing and publishing a release
 
-The repository and release candidate remain private until the owner explicitly
-chooses to publish them. No workflow changes visibility or publishes a release.
+Prepare releases as drafts until the owner explicitly chooses to publish them.
+No workflow changes repository visibility or publishes a release.
 
 1. Run `python3 -m unittest -v` and confirm Linux/macOS CI is green for the exact
    commit being released. Linux CI also requires real MPTCP controls to pass.
